@@ -1018,7 +1018,7 @@ footer {
 </footer>
 
 <script>
-// Form submission
+// Form submission — silent POST to Google Forms
 function submitForm() {
   const name  = document.getElementById('f-name').value.trim();
   const email = document.getElementById('f-email').value.trim();
@@ -1026,15 +1026,20 @@ function submitForm() {
     alert('Please enter your name and email.');
     return;
   }
-  // Log to console for now — replace with Airtable/Notion API later
-  console.log('Access request:', {
-    name,
-    email,
-    org:     document.getElementById('f-org').value,
-    useCase: document.getElementById('f-use').value,
-    more:    document.getElementById('f-more').value,
-    time:    new Date().toISOString()
-  });
+
+  const FORM_ID = '1FAIpQLSeDzyoZrESUDAo4NQk6zD4h-A_MKDVVxH7sN8KOvxjQ7-xrGg';
+  const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+
+  const body = new FormData();
+  body.append('entry.1942888713', name);
+  body.append('entry.1350982386', email);
+  body.append('entry.87168013',   document.getElementById('f-org').value);
+  body.append('entry.659347770',  document.getElementById('f-use').value);
+  body.append('entry.2133022524', document.getElementById('f-more').value);
+
+  // Silent fetch — Google Forms returns a CORS error but the submission still goes through
+  fetch(url, { method: 'POST', body, mode: 'no-cors' }).catch(() => {});
+
   document.getElementById('form-content').style.display = 'none';
   document.getElementById('form-success').classList.add('show');
 }
