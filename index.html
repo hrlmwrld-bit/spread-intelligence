@@ -666,6 +666,45 @@ footer {
   font-size: 12px;
   color: #555;
 }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 100px 20px 60px;
+    min-height: auto;
+    gap: 40px;
+  }
+  .hero-bg-number { display: none; }
+  .hero-left { padding-right: 0; }
+  h1 { font-size: 56px; }
+
+  .findings { padding: 60px 20px; }
+  .section-header { grid-template-columns: 1fr; gap: 20px; }
+  .section-num { font-size: 48px; }
+  .findings-grid { grid-template-columns: 1fr; }
+
+  .api-section {
+    grid-template-columns: 1fr;
+    padding: 60px 20px;
+    gap: 40px;
+  }
+  .api-left { position: static; }
+
+  .access-section {
+    grid-template-columns: 1fr;
+    padding: 60px 20px;
+    gap: 40px;
+  }
+  .form-wrapper { padding: 28px 20px; }
+  .form-row { grid-template-columns: 1fr; }
+
+  footer { flex-direction: column; gap: 12px; padding: 28px 20px; text-align: center; }
+  .code-block { font-size: 11px; padding: 20px 16px; }
+}
 </style>
 </head>
 <body>
@@ -1030,15 +1069,33 @@ function submitForm() {
   const FORM_ID = '1FAIpQLSeDzyoZrESUDAo4NQk6zD4h-A_MKDVVxH7sN8KOvxjQ7-xrGg';
   const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
 
-  const body = new FormData();
-  body.append('entry.1942888713', name);
-  body.append('entry.1350982386', email);
-  body.append('entry.87168013',   document.getElementById('f-org').value);
-  body.append('entry.659347770',  document.getElementById('f-use').value);
-  body.append('entry.2133022524', document.getElementById('f-more').value);
+  const iframe = document.createElement('iframe');
+  iframe.name = 'gf-iframe';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
 
-  // Silent fetch — Google Forms returns a CORS error but the submission still goes through
-  fetch(url, { method: 'POST', body, mode: 'no-cors' }).catch(() => {});
+  const gform = document.createElement('form');
+  gform.action = url;
+  gform.method = 'POST';
+  gform.target = 'gf-iframe';
+
+  const fields = {
+    'entry.1942888713': name,
+    'entry.1350982386': email,
+    'entry.87168013':   document.getElementById('f-org').value,
+    'entry.659347770':  document.getElementById('f-use').value,
+    'entry.2133022524': document.getElementById('f-more').value,
+  };
+
+  Object.entries(fields).forEach(([k, v]) => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = k; inp.value = v;
+    gform.appendChild(inp);
+  });
+
+  document.body.appendChild(gform);
+  gform.submit();
+  setTimeout(() => { document.body.removeChild(gform); document.body.removeChild(iframe); }, 2000);
 
   document.getElementById('form-content').style.display = 'none';
   document.getElementById('form-success').classList.add('show');
