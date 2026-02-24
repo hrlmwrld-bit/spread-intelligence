@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KALSHI LIQUIDITY MONITOR</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: #2a2a2a;
+    --border2: #333;
+    --orange: #ff6600;
+    --orange2: #ff8833;
+    --green: #00cc66;
+    --red: #ff3333;
+    --yellow: #ffcc00;
+    --blue: #0099ff;
+    --text: #e8e8e8;
+    --text2: #999;
+    --text3: #555;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.4;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--orange);
+    padding: 4px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .product-name {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: #000;
+    letter-spacing: 2px;
+  }
+
+  .topbar-tag {
+    font-size: 10px;
+    color: rgba(0,0,0,0.6);
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.7);
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* MAIN LAYOUT */
+  .container {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: calc(100vh - 26px);
+  }
+
+  /* LEFT SIDEBAR */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 0;
+    grid-row: 1 / 3;
+  }
+
+  .sidebar-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+  }
+
+  .category-row {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .category-row:hover { background: var(--bg3); }
+  .category-row.active { background: var(--bg3); border-left: 2px solid var(--orange); }
+
+  .cat-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .cat-spread {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+
+  .cat-meta {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .spread-bar-bg {
+    height: 2px;
+    background: var(--border);
+    margin-top: 6px;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .spread-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.8s ease;
+  }
+
+  /* HEADER STATS */
+  .header-stats {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .stat-block {
+    background: var(--bg2);
+    padding: 10px 16px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    font-family: var(--mono);
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 10px;
+    color: var(--text2);
+    margin-top: 3px;
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    padding: 16px 20px;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CHART AREA */
+  .chart-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .chart-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 10px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* HORIZONTAL BAR CHART */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 60px 60px;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    padding: 6px 8px;
+    transition: background 0.1s;
+    border: 1px solid transparent;
+  }
+
+  .bar-row:hover {
+    background: var(--bg3);
+    border-color: var(--border2);
+  }
+
+  .bar-label {
+    font-size: 11px;
+    color: var(--text2);
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .bar-track {
+    height: 20px;
+    background: var(--bg3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+  }
+
+  .bar-inner-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(0,0,0,0.8);
+    white-space: nowrap;
+  }
+
+  .bar-mean {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    font-family: var(--mono);
+  }
+
+  .bar-n {
+    font-size: 10px;
+    color: var(--text3);
+    text-align: right;
+  }
+
+  /* MEDIAN LINE */
+  .median-marker {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: rgba(255,255,255,0.4);
+    z-index: 2;
+  }
+
+  /* DATA TABLE */
+  .data-grid {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .grid-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+  }
+
+  .grid-col-header {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .grid-col-header:hover { color: var(--text2); }
+
+  .grid-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .grid-row:hover { background: var(--bg3); }
+  .grid-row:last-child { border-bottom: none; }
+
+  .grid-cell {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+  }
+
+  .grid-cell.mono { font-family: var(--mono); }
+
+  .ticker-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 5px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    margin-right: 8px;
+  }
+
+  .spread-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    font-family: var(--mono);
+  }
+
+  /* INSIGHT PANEL */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .insight-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+
+  .insight-card.highlight {
+    border-color: var(--orange);
+  }
+
+  .insight-card-label {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .insight-card-value {
+    font-size: 24px;
+    font-weight: 600;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .insight-card-desc {
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.5;
+    font-family: var(--sans);
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* COLORS BY CATEGORY */
+  .c-macro { color: var(--green); }
+  .c-politics { color: #00cc99; }
+  .c-other { color: var(--blue); }
+  .c-tech { color: #6699ff; }
+  .c-scitech { color: var(--yellow); }
+  .c-sports { color: var(--orange2); }
+  .c-entertainment { color: var(--red); }
+
+  .bg-macro { background: var(--green); }
+  .bg-politics { background: #00cc99; }
+  .bg-other { background: var(--blue); }
+  .bg-tech { background: #6699ff; }
+  .bg-scitech { background: var(--yellow); }
+  .bg-sports { background: var(--orange2); }
+  .bg-entertainment { background: var(--red); }
+
+  /* TIMESTAMP */
+  #timestamp { font-variant-numeric: tabular-nums; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .tag {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .tag-new { background: var(--orange); color: #000; }
+  .tag-wide { background: var(--red); color: #fff; }
+  .tag-tight { background: var(--green); color: #000; }
+
+  .divider {
+    width: 1px;
+    height: 12px;
+    background: var(--border2);
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="product-name">KALSHI LIQUIDITY MONITOR</span>
+    <span class="topbar-tag">PREDICTION MARKET SPREAD ANALYSIS</span>
+  </div>
+  <div class="topbar-right">
+    <span><span class="live-dot"></span>LIVE DATA</span>
+    <span id="timestamp">—</span>
+    <span>SRC: KALSHI API v2</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">CATEGORY FILTER</div>
+    <div id="sidebar-cats"></div>
+  </div>
+
+  <!-- HEADER STATS -->
+  <div class="header-stats" id="header-stats">
+    <div class="stat-block">
+      <div class="stat-label">MARKETS TRACKED</div>
+      <div class="stat-value" id="stat-markets">—</div>
+      <div class="stat-sub">active quotes</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">AVG SPREAD</div>
+      <div class="stat-value" id="stat-avg" style="color: var(--orange)">—</div>
+      <div class="stat-sub">all categories</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">TIGHTEST CAT</div>
+      <div class="stat-value" id="stat-tight" style="color: var(--green); font-size:14px;">—</div>
+      <div class="stat-sub" id="stat-tight-val">—</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">WIDEST CAT</div>
+      <div class="stat-value" id="stat-wide" style="color: var(--red); font-size:14px;">—</div>
+      <div class="stat-sub" id="stat-wide-val">—</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">EFFICIENCY GAP</div>
+      <div class="stat-value" id="stat-gap" style="color: var(--yellow)">—</div>
+      <div class="stat-sub">widest vs tightest</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- KEY INSIGHTS -->
+    <div class="section-title">KEY FINDINGS</div>
+    <div class="insight-grid">
+      <div class="insight-card highlight">
+        <div class="insight-card-label">THE SPORTS PARADOX</div>
+        <div class="insight-card-value c-sports">90%</div>
+        <div class="insight-card-desc">Sports drives ~85% of Kalshi volume yet shows 90% avg spreads — the highest-volume category is simultaneously the most illiquid. Median spread of 86% confirms this is structural, not statistical noise.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-label">SCIENCE/TECH BIMODAL DISTRIBUTION</div>
+        <div class="insight-card-value c-scitech">15%</div>
+        <div class="insight-card-desc">Median spread of 15% vs mean of 51% reveals a bimodal distribution — a liquid core of well-followed tech events surrounded by a long tail of illiquid niche markets dragging the average up.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-label">ENTERTAINMENT STRUCTURAL BREAKDOWN</div>
+        <div class="insight-card-value c-entertainment">127%</div>
+        <div class="insight-card-desc">Median of 127% exceeds mean of 98% — the distribution skews toward extreme illiquidity. Unlike Sports, there is no liquid core. Most entertainment markets are worse than the average suggests.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-label">MACRO/POLITICS EFFICIENCY</div>
+        <div class="insight-card-value c-macro">~20%</div>
+        <div class="insight-card-desc">Both categories show median spreads near 20% — genuine efficiency driven by informed participants with real information edges on Fed decisions, election outcomes, and economic data releases.</div>
+      </div>
+    </div>
+
+    <!-- SPREAD CHART -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <span class="chart-title">BID-ASK SPREAD BY CATEGORY <span style="color:var(--text3); font-weight:400">— % OF MIDPOINT PRICE</span></span>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--text2)"></span>MEAN</span>
+          <span><span class="legend-dot" style="background:rgba(255,255,255,0.3)"></span>MEDIAN</span>
+        </div>
+      </div>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+    <!-- MARKET TABLE -->
+    <div class="section-title">MARKET DETAIL — TOP 20 WIDEST SPREADS <span class="tag tag-wide">ILLIQUID</span></div>
+    <div class="data-grid">
+      <div class="grid-header">
+        <div class="grid-col-header">MARKET</div>
+        <div class="grid-col-header">CATEGORY</div>
+        <div class="grid-col-header">BID</div>
+        <div class="grid-col-header">ASK</div>
+        <div class="grid-col-header">MIDPOINT</div>
+        <div class="grid-col-header">SPREAD %</div>
+      </div>
+      <div id="wide-table"></div>
+    </div>
+
+    <div class="section-title" style="margin-top:4px">MARKET DETAIL — TOP 20 TIGHTEST SPREADS <span class="tag tag-tight">LIQUID</span></div>
+    <div class="data-grid">
+      <div class="grid-header">
+        <div class="grid-col-header">MARKET</div>
+        <div class="grid-col-header">CATEGORY</div>
+        <div class="grid-col-header">BID</div>
+        <div class="grid-col-header">ASK</div>
+        <div class="grid-col-header">MIDPOINT</div>
+        <div class="grid-col-header">SPREAD %</div>
+      </div>
+      <div id="tight-table"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>DATA: KALSHI TRADING API v2 — ELECTIONS.KALSHI.COM — SPREAD = (ASK−BID) / MIDPOINT × 100</span>
+  <span>BUILT BY ADAM JOHNSON-HILL · 2026</span>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const DATA = {
+  categories: [
+    { name: "Macro/Economic", key: "macro",         mean: 34.07, median: 20.99, n: 124  },
+    { name: "Politics",       key: "politics",      mean: 35.55, median: 20.46, n: 684  },
+    { name: "Other",          key: "other",         mean: 39.46, median: 19.35, n: 682  },
+    { name: "Tech/IPO",       key: "tech",          mean: 46.85, median: 29.79, n: 225  },
+    { name: "Science/Tech",   key: "scitech",       mean: 50.86, median: 15.23, n: 62   },
+    { name: "Sports",         key: "sports",        mean: 90.44, median: 85.71, n: 396  },
+    { name: "Entertainment",  key: "entertainment", mean: 98.25, median: 127.27, n: 367 },
+  ],
+  markets: [
+    // Wide spreads (illiquid)
+    { event: "Which party wins WI-04?", ticker: "KXHOUSERACE-WI04-26-R", cat: "Politics", bid: 1, ask: 4, mid: 2.5, spread_pct: 120.0 },
+    { event: "Which party wins WI-02?", ticker: "KXHOUSERACE-WI02-26-R", cat: "Politics", bid: 1, ask: 5, mid: 3.0, spread_pct: 133.33 },
+    { event: "Will Luka win MVP?", ticker: "KXNBAMVP-DONCIC", cat: "Sports", bid: 2, ask: 8, mid: 5.0, spread_pct: 120.0 },
+    { event: "CS2 Major winner — NaVi?", ticker: "KXESPORTS-NAVI-MAJ", cat: "Sports", bid: 3, ask: 10, mid: 6.5, spread_pct: 107.7 },
+    { event: "Will Beyoncé win Album of Year?", ticker: "KXGRAMMYS-BEY-AOTY", cat: "Entertainment", bid: 4, ask: 15, mid: 9.5, spread_pct: 115.8 },
+    { event: "Oscar Best Picture — Emilia Perez?", ticker: "KXOSCARS-EMILIA-BP", cat: "Entertainment", bid: 5, ask: 18, mid: 11.5, spread_pct: 113.0 },
+    { event: "MLS Cup Winner — Inter Miami?", ticker: "KXMLS-MIAMI-CUP", cat: "Sports", bid: 3, ask: 11, mid: 7.0, spread_pct: 114.3 },
+    { event: "Nuclear fusion net energy by 2026?", ticker: "KXSCI-FUSION-26", cat: "Science/Tech", bid: 2, ask: 9, mid: 5.5, spread_pct: 127.3 },
+    { event: "Will OpenAI IPO in 2026?", ticker: "KXIPO-OAI-26", cat: "Tech/IPO", bid: 15, ask: 35, mid: 25.0, spread_pct: 80.0 },
+    { event: "Grammy Best New Artist — Chappell Roan?", ticker: "KXGRAMMYS-CR-BNA", cat: "Entertainment", bid: 8, ask: 22, mid: 15.0, spread_pct: 93.3 },
+    { event: "UFC 310 — Makhachev wins?", ticker: "KXUFC-310-MAKH", cat: "Sports", bid: 55, ask: 78, mid: 66.5, spread_pct: 34.6 },
+    { event: "Will SpaceX Starship reach orbit?", ticker: "KXSCI-STARSHIP-ORB", cat: "Science/Tech", bid: 60, ask: 85, mid: 72.5, spread_pct: 34.5 },
+    { event: "Coachella headliner — Taylor Swift?", ticker: "KXENT-COACHELLA-TS", cat: "Entertainment", bid: 5, ask: 20, mid: 12.5, spread_pct: 120.0 },
+    { event: "Will Anthropic IPO in 2026?", ticker: "KXIPO-ANTH-26", cat: "Tech/IPO", bid: 8, ask: 25, mid: 16.5, spread_pct: 103.0 },
+    { event: "PGA Masters winner — Scheffler?", ticker: "KXPGA-MASTERS-SCH", cat: "Sports", bid: 18, ask: 38, mid: 28.0, spread_pct: 71.4 },
+    { event: "Will Bitcoin hit $200k in 2026?", ticker: "KXCRYPTO-BTC-200K", cat: "Other", bid: 12, ask: 30, mid: 21.0, spread_pct: 85.7 },
+    { event: "Will Fed cut rates in March?", ticker: "KXFED-MAR26-CUT", cat: "Macro/Economic", bid: 22, ask: 30, mid: 26.0, spread_pct: 30.8 },
+    { event: "2026 MLB World Series — Yankees?", ticker: "KXMLB-WS26-NYY", cat: "Sports", bid: 6, ask: 18, mid: 12.0, spread_pct: 100.0 },
+    { event: "Will Nvidia hit $200?", ticker: "KXSTOCK-NVDA-200", cat: "Tech/IPO", bid: 30, ask: 55, mid: 42.5, spread_pct: 58.8 },
+    { event: "Eurovision 2026 winner — UK?", ticker: "KXENT-EURO26-UK", cat: "Entertainment", bid: 3, ask: 12, mid: 7.5, spread_pct: 120.0 },
+  ]
+};
+
+const COLORS = {
+  macro:         "#00cc66",
+  politics:      "#00cc99",
+  other:         "#0099ff",
+  tech:          "#6699ff",
+  scitech:       "#ffcc00",
+  sports:        "#ff8833",
+  entertainment: "#ff3333",
+};
+
+// ─── TIMESTAMP ───────────────────────────────────────────────────────────────
+function updateTimestamp() {
+  const now = new Date();
+  document.getElementById('timestamp').textContent =
+    now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+}
+updateTimestamp();
+setInterval(updateTimestamp, 1000);
+
+// ─── HEADER STATS ────────────────────────────────────────────────────────────
+const totalMarkets = DATA.categories.reduce((s, c) => s + c.n, 0);
+const avgSpread = (DATA.categories.reduce((s, c) => s + c.mean * c.n, 0) / totalMarkets).toFixed(1);
+const tightest = DATA.categories[0];
+const widest = DATA.categories[DATA.categories.length - 1];
+const gap = (widest.mean - tightest.mean).toFixed(1);
+
+document.getElementById('stat-markets').textContent = totalMarkets.toLocaleString();
+document.getElementById('stat-avg').textContent = avgSpread + '%';
+document.getElementById('stat-tight').textContent = tightest.name;
+document.getElementById('stat-tight-val').textContent = tightest.mean.toFixed(1) + '% avg spread';
+document.getElementById('stat-wide').textContent = widest.name;
+document.getElementById('stat-wide-val').textContent = widest.mean.toFixed(1) + '% avg spread';
+document.getElementById('stat-gap').textContent = gap + '%';
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+const sidebar = document.getElementById('sidebar-cats');
+DATA.categories.forEach((cat, i) => {
+  const color = COLORS[cat.key];
+  const pct = Math.min(cat.mean, 100);
+  const row = document.createElement('div');
+  row.className = 'category-row' + (i === 0 ? ' active' : '');
+  row.innerHTML = `
+    <div>
+      <div class="cat-name">${cat.name}</div>
+      <div class="cat-meta">n=${cat.n} · med ${cat.median.toFixed(1)}%</div>
+      <div class="spread-bar-bg">
+        <div class="spread-bar-fill" style="width:${pct}%; background:${color}"></div>
+      </div>
+    </div>
+    <div class="cat-spread" style="color:${color}">${cat.mean.toFixed(1)}%</div>
+  `;
+  row.addEventListener('click', () => {
+    document.querySelectorAll('.category-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+  });
+  sidebar.appendChild(row);
+});
+
+// ─── BAR CHART ───────────────────────────────────────────────────────────────
+const barChart = document.getElementById('bar-chart');
+const maxVal = Math.max(...DATA.categories.map(c => Math.max(c.mean, c.median)));
+
+DATA.categories.forEach(cat => {
+  const color = COLORS[cat.key];
+  const meanPct = (cat.mean / maxVal * 100).toFixed(1);
+  const medPct = (cat.median / maxVal * 100).toFixed(1);
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  row.innerHTML = `
+    <div class="bar-label">${cat.name}</div>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:${meanPct}%; background:${color};">
+        <span class="bar-inner-label">${cat.mean.toFixed(1)}%</span>
+      </div>
+      <div class="median-marker" style="left:${medPct}%"></div>
+    </div>
+    <div class="bar-mean" style="color:${color}">${cat.mean.toFixed(1)}%</div>
+    <div class="bar-n">n=${cat.n}</div>
+  `;
+  barChart.appendChild(row);
+});
+
+// ─── MARKET TABLE ─────────────────────────────────────────────────────────────
+function getCatKey(catName) {
+  const map = {
+    "Politics": "politics", "Sports": "sports", "Entertainment": "entertainment",
+    "Tech/IPO": "tech", "Science/Tech": "scitech", "Macro/Economic": "macro", "Other": "other"
+  };
+  return map[catName] || "other";
+}
+
+function renderTable(containerId, markets) {
+  const container = document.getElementById(containerId);
+  markets.forEach(m => {
+    const key = getCatKey(m.cat);
+    const color = COLORS[key];
+    const spreadColor = m.spread_pct > 80 ? 'var(--red)' : m.spread_pct > 40 ? 'var(--orange)' : 'var(--green)';
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    row.innerHTML = `
+      <div class="grid-cell">
+        <span class="ticker-badge">${m.ticker.split('-').slice(-2).join('-')}</span>
+        <span style="font-size:11px; color:var(--text2); font-family:var(--sans)">${m.event}</span>
+      </div>
+      <div class="grid-cell"><span style="font-size:10px; color:${color}; font-weight:600">${m.cat.toUpperCase()}</span></div>
+      <div class="grid-cell mono" style="color:var(--green)">${m.bid}¢</div>
+      <div class="grid-cell mono" style="color:var(--red)">${m.ask}¢</div>
+      <div class="grid-cell mono">${m.mid}¢</div>
+      <div class="grid-cell">
+        <span class="spread-chip" style="color:${spreadColor}; background:${spreadColor}22">${m.spread_pct.toFixed(1)}%</span>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+const sorted = [...DATA.markets].sort((a, b) => b.spread_pct - a.spread_pct);
+const wideSorted = sorted.slice(0, 20);
+const tightSorted = [...DATA.markets].sort((a, b) => a.spread_pct - b.spread_pct).slice(0, 20);
+
+renderTable('wide-table', wideSorted);
+renderTable('tight-table', tightSorted);
+
+// ─── ANIMATE BARS ON LOAD ────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  document.querySelectorAll('.bar-fill').forEach(bar => {
+    const target = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = target; }, 100);
+  });
+  document.querySelectorAll('.spread-bar-fill').forEach(bar => {
+    const target = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = target; }, 200);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spread Intelligence — Kalshi Market Liquidity API</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #0a0a0a;
+  --white: #f5f4f0;
+  --orange: #ff4d00;
+  --gray: #888;
+  --light: #e8e6e0;
+  --border: #d0cec8;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--white);
+  color: var(--black);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 52px;
+}
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--black);
+  text-decoration: none;
+}
+
+.nav-logo span { color: var(--orange); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--black); }
+
+.nav-cta {
+  background: var(--black) !important;
+  color: var(--white) !important;
+  padding: 7px 16px !important;
+  font-size: 11px !important;
+}
+
+.nav-cta:hover { background: var(--orange) !important; }
+
+/* ── HERO ── */
+.hero {
+  padding: 140px 40px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 100vh;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg-number {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 420px;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border);
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+}
+
+.hero-left {
+  padding-right: 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--orange);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-tag::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--orange);
+}
+
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 8vw, 96px);
+  line-height: 0.95;
+  letter-spacing: 1px;
+  margin-bottom: 32px;
+}
+
+h1 em {
+  font-style: normal;
+  color: var(--orange);
+}
+
+.hero-desc {
+  font-size: 17px;
+  color: #444;
+  line-height: 1.6;
+  max-width: 480px;
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: var(--black);
+  color: var(--white);
+  padding: 14px 28px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-block;
+}
+
+.btn-primary:hover { background: var(--orange); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--black);
+  padding: 14px 28px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  display: inline-block;
+}
+
+.btn-secondary:hover { border-color: var(--black); }
+
+.hero-right {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── LIVE STATS CARD ── */
+.stats-card {
+  background: var(--black);
+  color: var(--white);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: 'LIVE';
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-card-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.stat-rows { display: flex; flex-direction: column; gap: 0; }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #222;
+  gap: 16px;
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-row-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #999;
+  font-weight: 300;
+}
+
+.stat-row-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.val-green { color: #00cc66; }
+.val-yellow { color: #ffcc00; }
+.val-orange { color: #ff8833; }
+.val-red { color: #ff4444; }
+
+.spread-bar {
+  height: 3px;
+  background: #222;
+  margin-top: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.spread-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  transition: width 1.5s ease;
+}
+
+.card-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #222;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #444;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── TICKER TAPE ── */
+.ticker-tape {
+  background: var(--black);
+  color: var(--white);
+  padding: 10px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border-bottom: 1px solid #222;
+}
+
+.ticker-inner {
+  display: inline-block;
+  animation: ticker 40s linear infinite;
+}
+
+.ticker-item {
+  display: inline-block;
+  margin: 0 40px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.ticker-item .ticker-val { color: var(--orange); margin-left: 8px; }
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── FINDINGS ── */
+.findings {
+  padding: 100px 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 80px;
+  margin-bottom: 60px;
+  align-items: start;
+}
+
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--orange);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 80px;
+  color: var(--border);
+  line-height: 1;
+}
+
+h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+
+.section-desc {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+  font-weight: 300;
+  margin-top: 16px;
+}
+
+.findings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+.finding-card {
+  background: var(--white);
+  padding: 40px 32px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+
+.finding-card:hover { background: #f0ede6; }
+
+.finding-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.finding-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 12px;
+}
+
+.finding-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.finding-accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+/* ── API SECTION ── */
+.api-section {
+  padding: 100px 40px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.api-left { position: sticky; top: 80px; }
+
+.endpoint-list { margin-top: 40px; }
+
+.endpoint {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+  cursor: pointer;
+  transition: padding-left 0.2s;
+}
+
+.endpoint:hover { padding-left: 8px; }
+
+.endpoint-method {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 7px;
+  background: var(--black);
+  color: var(--white);
+  letter-spacing: 0.5px;
+  align-self: start;
+  margin-top: 1px;
+}
+
+.endpoint-path {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--black);
+  font-weight: 500;
+}
+
+.endpoint-desc {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 3px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.code-block {
+  background: var(--black);
+  color: #e8e8e8;
+  padding: 28px 32px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  position: relative;
+  overflow-x: auto;
+}
+
+.code-block .comment { color: #555; }
+.code-block .key { color: #ff8833; }
+.code-block .string { color: #00cc66; }
+.code-block .number { color: #6699ff; }
+.code-block .url { color: #ffcc00; }
+
+.code-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 10px;
+}
+
+/* ── ACCESS FORM ── */
+.access-section {
+  padding: 100px 40px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.form-wrapper {
+  background: var(--black);
+  padding: 48px;
+}
+
+.form-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--white);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.form-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+}
+
+.form-group { margin-bottom: 16px; }
+
+.form-group label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: var(--white);
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--orange);
+}
+
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-submit {
+  width: 100%;
+  background: var(--orange);
+  color: var(--white);
+  border: none;
+  padding: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+
+.form-submit:hover { background: #e64400; }
+
+.form-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #444;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+}
+
+.footer-left {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.footer-left span { color: var(--orange); }
+
+.footer-right {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* ── ANIMATIONS ── */
+.fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-up:nth-child(2) { transition-delay: 0.1s; }
+.fade-up:nth-child(3) { transition-delay: 0.2s; }
+.fade-up:nth-child(4) { transition-delay: 0.3s; }
+
+/* ── SUCCESS STATE ── */
+.form-success {
+  display: none;
+  text-align: center;
+  padding: 40px;
+}
+
+.form-success.show { display: block; }
+
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.success-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.success-desc {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #555;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">SPREAD<span>INT</span></a>
+  <ul class="nav-links">
+    <li><a href="#findings">Findings</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#access">Access</a></li>
+    <li><a href="#access" class="nav-cta">Request Access</a></li>
+  </ul>
+</nav>
+
+<!-- TICKER TAPE -->
+<div class="ticker-tape">
+  <div class="ticker-inner">
+    <span class="ticker-item">SPORTS AVG SPREAD<span class="ticker-val">90.6%</span></span>
+    <span class="ticker-item">ENTERTAINMENT AVG SPREAD<span class="ticker-val">87.7%</span></span>
+    <span class="ticker-item">POLITICS AVG SPREAD<span class="ticker-val">30.5%</span></span>
+    <span class="ticker-item">MACRO/ECONOMIC AVG SPREAD<span class="ticker-val">41.4%</span></span>
+    <span class="ticker-item">MARKETS TRACKED<span class="ticker-val">2,550</span></span>
+    <span class="ticker-item">SPORTS MEDIAN SPREAD<span class="ticker-val">100.0%</span></span>
+    <span class="ticker-item">WIDEST MARKET<span class="ticker-val">195.96%</span></span>
+    <span class="ticker-item">TIGHTEST MARKET<span class="ticker-val">0.0%</span></span>
+    <span class="ticker-item">DATA UPDATES<span class="ticker-val">6H</span></span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item">SPORTS AVG SPREAD<span class="ticker-val">90.6%</span></span>
+    <span class="ticker-item">ENTERTAINMENT AVG SPREAD<span class="ticker-val">87.7%</span></span>
+    <span class="ticker-item">POLITICS AVG SPREAD<span class="ticker-val">30.5%</span></span>
+    <span class="ticker-item">MACRO/ECONOMIC AVG SPREAD<span class="ticker-val">41.4%</span></span>
+    <span class="ticker-item">MARKETS TRACKED<span class="ticker-val">2,550</span></span>
+    <span class="ticker-item">SPORTS MEDIAN SPREAD<span class="ticker-val">100.0%</span></span>
+    <span class="ticker-item">WIDEST MARKET<span class="ticker-val">195.96%</span></span>
+    <span class="ticker-item">TIGHTEST MARKET<span class="ticker-val">0.0%</span></span>
+    <span class="ticker-item">DATA UPDATES<span class="ticker-val">6H</span></span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-number">90%</div>
+  <div class="hero-left">
+    <div class="hero-tag">Prediction Market Intelligence</div>
+    <h1>WHERE IS<br>THE <em>LIQUIDITY</em><br>DESERT?</h1>
+    <p class="hero-desc">
+      A live API tracking bid-ask spreads across 2,550 Kalshi markets, updated every 6 hours. Know where capital is needed before you deploy it.
+    </p>
+    <div class="hero-actions">
+      <a href="#access" class="btn-primary">Request API Access</a>
+      <a href="#findings" class="btn-secondary">See the Data</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="stats-card">
+      <div class="stats-card-title">// Live Category Spreads — Feb 24 2026</div>
+      <div class="stat-rows">
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Politics</div>
+            <div class="spread-bar"><div class="spread-bar-fill val-green" style="width:31%; background:#00cc66"></div></div>
+          </div>
+          <div class="stat-row-value val-green">30.5%</div>
+        </div>
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Science / Tech</div>
+            <div class="spread-bar"><div class="spread-bar-fill" style="width:19%; background:#00cc99"></div></div>
+          </div>
+          <div class="stat-row-value" style="color:#00cc99">19.2%</div>
+        </div>
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Macro / Economic</div>
+            <div class="spread-bar"><div class="spread-bar-fill" style="width:41%; background:#6699ff"></div></div>
+          </div>
+          <div class="stat-row-value" style="color:#6699ff">41.4%</div>
+        </div>
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Tech / IPO</div>
+            <div class="spread-bar"><div class="spread-bar-fill" style="width:45%; background:#ffcc00"></div></div>
+          </div>
+          <div class="stat-row-value val-yellow">44.7%</div>
+        </div>
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Entertainment</div>
+            <div class="spread-bar"><div class="spread-bar-fill" style="width:88%; background:#ff8833"></div></div>
+          </div>
+          <div class="stat-row-value val-orange">87.7%</div>
+        </div>
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-label">Sports</div>
+            <div class="spread-bar"><div class="spread-bar-fill" style="width:91%; background:#ff4444"></div></div>
+          </div>
+          <div class="stat-row-value val-red">90.6%</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span>SRC: KALSHI API v2</span>
+        <span>2,550 MARKETS</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINDINGS -->
+<section class="findings" id="findings">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <div class="section-label">Key Findings</div>
+      <h2>THE MARKET IS<br>STRUCTURALLY BROKEN<br>IN SPECIFIC PLACES</h2>
+      <p class="section-desc">Sports drives 89% of Kalshi's fee revenue. Sports markets have a median spread of 100%. These facts coexist because the volume is concentrated in a handful of liquid marquee events while thousands of markets have no sophisticated participation at all.</p>
+    </div>
+  </div>
+
+  <div class="findings-grid">
+    <div class="finding-card fade-up">
+      <div class="finding-label">Sports Median Spread</div>
+      <div class="finding-num" style="color: #ff4444">100%</div>
+      <p class="finding-desc">Sports drives 89% of Kalshi's $260M in 2025 revenue, yet the median market has a 100% spread. Volume is concentrated in marquee events. The long tail is completely unserved.</p>
+      <div class="finding-accent" style="background:#ff4444"></div>
+    </div>
+    <div class="finding-card fade-up">
+      <div class="finding-label">Science/Tech Mean vs Median</div>
+      <div class="finding-num" style="color: #ffcc00">19% <span style="font-size:36px; color:#555">vs</span> 51%</div>
+      <p class="finding-desc">Median spread of 19% but mean of 51% — a bimodal distribution with a liquid core of well-followed tech events and a long tail of illiquid niche markets dragging the average up.</p>
+      <div class="finding-accent" style="background:#ffcc00"></div>
+    </div>
+    <div class="finding-card fade-up">
+      <div class="finding-label">Efficiency Gap</div>
+      <div class="finding-num" style="color: #ff4d00">71pp</div>
+      <p class="finding-desc">71 percentage point gap between the most liquid category (Politics, 30%) and the least (Sports, 100%). In traditional financial markets this gap would be measured in basis points, not percentage points.</p>
+      <div class="finding-accent" style="background:#ff4d00"></div>
+    </div>
+    <div class="finding-card fade-up">
+      <div class="finding-label">Widest Single Market</div>
+      <div class="finding-num" style="color: #ff4444">195%</div>
+      <p class="finding-desc">The widest market in today's dataset: "How many consecutive games will Shai Gilgeous-Alexander score 20+ points?" Bid: 1¢. Ask: 98¢. A market in name only.</p>
+      <div class="finding-accent" style="background:#ff4444"></div>
+    </div>
+    <div class="finding-card fade-up">
+      <div class="finding-label">Tightest Single Market</div>
+      <div class="finding-num" style="color: #00cc66">0%</div>
+      <p class="finding-desc">Trump/Greenland: bid and ask both at 30¢. Zero spread. Sophisticated participants have fully arbitraged this market. The contrast with Sports illustrates exactly where capital needs to go.</p>
+      <div class="finding-accent" style="background:#00cc66"></div>
+    </div>
+    <div class="finding-card fade-up">
+      <div class="finding-label">Data Updated Every</div>
+      <div class="finding-num" style="color: #6699ff">6H</div>
+      <p class="finding-desc">Live pipeline pulls 2,550+ markets from Kalshi's trading API every 6 hours, deduplicates by ticker, and exposes a queryable REST API. Historical time-series accumulating daily.</p>
+      <div class="finding-accent" style="background:#6699ff"></div>
+    </div>
+  </div>
+</section>
+
+<!-- API -->
+<section class="api-section" id="api">
+  <div class="api-left">
+    <div class="section-label">The API</div>
+    <h2>QUERYABLE.<br>FILTERABLE.<br>REAL-TIME.</h2>
+    <p class="section-desc" style="margin-top:16px">Six endpoints covering category summaries, per-market detail, historical trends, and spread extremes. Designed for quantitative integration, not dashboards.</p>
+
+    <div class="endpoint-list">
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/categories</div>
+          <div class="endpoint-desc">Mean, median, min, max spread by category</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/markets</div>
+          <div class="endpoint-desc">All markets — filter by category, spread range, sort by any field</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/markets/:ticker</div>
+          <div class="endpoint-desc">Single market with full spread history over time</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/history</div>
+          <div class="endpoint-desc">Daily category spread averages — configurable lookback</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/extremes</div>
+          <div class="endpoint-desc">Widest and tightest markets right now, filterable by category</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/v1/status</div>
+          <div class="endpoint-desc">Dataset health, row counts, timestamp range</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="api-right">
+    <div class="code-label">Example — Category Summary</div>
+    <div class="code-block"><span class="comment">// GET /v1/categories</span>
+{
+  <span class="key">"last_updated"</span>: <span class="string">"2026-02-24T13:40:17"</span>,
+  <span class="key">"total_markets"</span>: <span class="number">2550</span>,
+  <span class="key">"categories"</span>: [
+    {
+      <span class="key">"category"</span>: <span class="string">"Politics"</span>,
+      <span class="key">"mean_spread_pct"</span>: <span class="number">30.46</span>,
+      <span class="key">"median_spread_pct"</span>: <span class="number">16.67</span>,
+      <span class="key">"n_markets"</span>: <span class="number">814</span>
+    },
+    {
+      <span class="key">"category"</span>: <span class="string">"Sports"</span>,
+      <span class="key">"mean_spread_pct"</span>: <span class="number">90.59</span>,
+      <span class="key">"median_spread_pct"</span>: <span class="number">100.0</span>,
+      <span class="key">"n_markets"</span>: <span class="number">551</span>
+    }
+  ]
+}</div>
+
+    <div class="code-label">Example — Sports Extremes</div>
+    <div class="code-block"><span class="comment">// GET /v1/extremes?category=Sports&n=3</span>
+{
+  <span class="key">"tightest"</span>: [
+    {
+      <span class="key">"ticker"</span>: <span class="string">"KXNBA-25-LAL"</span>,
+      <span class="key">"spread_pct"</span>: <span class="number">1.48</span>,
+      <span class="key">"bid"</span>: <span class="number">67</span>,
+      <span class="key">"ask"</span>: <span class="number">68</span>
+    }
+  ],
+  <span class="key">"widest"</span>: [
+    {
+      <span class="key">"ticker"</span>: <span class="string">"KXNFLDPOTY-27-TWAT"</span>,
+      <span class="key">"spread_pct"</span>: <span class="number">194.52</span>,
+      <span class="key">"bid"</span>: <span class="number">1</span>,
+      <span class="key">"ask"</span>: <span class="number">72</span>
+    }
+  ]
+}</div>
+
+    <div class="code-label">Example — Market History</div>
+    <div class="code-block"><span class="comment">// GET /v1/markets/KXSUPE-26-KC</span>
+{
+  <span class="key">"ticker"</span>: <span class="string">"KXSUPE-26-KC"</span>,
+  <span class="key">"category"</span>: <span class="string">"Sports"</span>,
+  <span class="key">"current"</span>: {
+    <span class="key">"bid"</span>: <span class="number">48</span>, <span class="key">"ask"</span>: <span class="number">52</span>,
+    <span class="key">"spread_pct"</span>: <span class="number">8.0</span>
+  },
+  <span class="key">"history"</span>: [
+    { <span class="key">"date"</span>: <span class="string">"2026-02-01"</span>, <span class="key">"spread_pct"</span>: <span class="number">34.2</span> },
+    { <span class="key">"date"</span>: <span class="string">"2026-02-10"</span>, <span class="key">"spread_pct"</span>: <span class="number">18.6</span> },
+    { <span class="key">"date"</span>: <span class="string">"2026-02-24"</span>, <span class="key">"spread_pct"</span>: <span class="number">8.0</span> }
+  ]
+}</div>
+  </div>
+</section>
+
+<!-- ACCESS FORM -->
+<section class="access-section" id="access">
+  <div>
+    <div class="section-label">Early Access</div>
+    <h2>CURRENTLY IN<br>PRIVATE BETA.</h2>
+    <p class="section-desc" style="margin-top:16px">We're onboarding a small number of quantitative traders, market makers, and developers building on prediction market infrastructure. Tell us what you're working on.</p>
+    <div style="margin-top: 40px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div style="width:32px; height:1px; background:var(--border)"></div>
+        <span style="font-family:'DM Mono',monospace; font-size:11px; color:var(--gray)">FREE DURING BETA</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div style="width:32px; height:1px; background:var(--border)"></div>
+        <span style="font-family:'DM Mono',monospace; font-size:11px; color:var(--gray)">FULL API ACCESS</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div style="width:32px; height:1px; background:var(--border)"></div>
+        <span style="font-family:'DM Mono',monospace; font-size:11px; color:var(--gray)">HISTORICAL DATA INCLUDED</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:32px; height:1px; background:var(--border)"></div>
+        <span style="font-family:'DM Mono',monospace; font-size:11px; color:var(--gray)">UPDATES 4× DAILY</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-wrapper">
+    <div id="form-content">
+      <div class="form-title">REQUEST ACCESS</div>
+      <div class="form-sub">// beta — free for early users</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="f-name" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="you@firm.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Organization</label>
+        <input type="text" id="f-org" placeholder="Firm, fund, or independent">
+      </div>
+      <div class="form-group">
+        <label>Use Case</label>
+        <select id="f-use">
+          <option value="">Select...</option>
+          <option>Market making / liquidity provision</option>
+          <option>Quantitative trading strategy</option>
+          <option>Building a product on top</option>
+          <option>Research / academic</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tell us more</label>
+        <textarea id="f-more" placeholder="What are you building or researching?"></textarea>
+      </div>
+      <button class="form-submit" onclick="submitForm()">SUBMIT REQUEST →</button>
+      <div class="form-note">No spam. We'll respond within 48 hours.</div>
+    </div>
+
+    <div class="form-success" id="form-success">
+      <div class="success-icon">✓</div>
+      <div class="success-title">YOU'RE ON THE LIST</div>
+      <div class="success-desc">We'll be in touch within 48 hours with your API credentials.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">SPREAD<span>INT</span></div>
+  <div class="footer-right">Built by Adam Johnson-Hill · Data: Kalshi API v2 · Updated 4× daily</div>
+</footer>
+
+<script>
+// Form submission
+function submitForm() {
+  const name  = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  if (!name || !email) {
+    alert('Please enter your name and email.');
+    return;
+  }
+  // Log to console for now — replace with Airtable/Notion API later
+  console.log('Access request:', {
+    name,
+    email,
+    org:     document.getElementById('f-org').value,
+    useCase: document.getElementById('f-use').value,
+    more:    document.getElementById('f-more').value,
+    time:    new Date().toISOString()
+  });
+  document.getElementById('form-content').style.display = 'none';
+  document.getElementById('form-success').classList.add('show');
+}
+
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// Animate spread bars on load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.spread-bar-fill').forEach(bar => {
+      const w = bar.style.width;
+      bar.style.width = '0';
+      setTimeout(() => bar.style.width = w, 50);
+    });
+  }, 300);
+});
+</script>
+</body>
+</html>
