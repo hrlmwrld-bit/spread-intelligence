@@ -39,16 +39,18 @@ while total_pulled < 500:
                             spread = ask - bid
                             spread_pct = round((spread / midpoint) * 100, 2)
                             results.append({
-                                "timestamp": datetime.now().isoformat(),
-                                "event": event.title,
-                                "series": event.series_ticker,
-                                "ticker": market.ticker,
-                                "bid": bid,
-                                "ask": ask,
-                                "midpoint": midpoint,
-                                "spread": spread,
-                                "spread_pct": spread_pct
-                            })
+                                            "timestamp": datetime.now().isoformat(),
+                                            "event": event.title,
+                                            "series": event.series_ticker,
+                                            "ticker": market.ticker,
+                                            "bid": bid,
+                                            "ask": ask,
+                                            "midpoint": midpoint,
+                                            "spread": spread,
+                                            "spread_pct": spread_pct,
+                                            "volume": market.volume or 0,
+                                            "volume_24h": market.volume_24h or 0,
+                                            })
                     except Exception:
                         continue
         except Exception:

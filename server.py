@@ -46,7 +46,7 @@ CATEGORY_MAP = {
     "KXFEDE": "Macro/Economic", "KXCPI": "Macro/Economic", "KXLCPI": "Macro/Economic",
     "KXGDPY": "Macro/Economic", "KXGDPS": "Macro/Economic", "KXGDPU": "Macro/Economic",
     "KXUNEM": "Macro/Economic", "KXU3MA": "Macro/Economic", "KXINFL": "Macro/Economic",
-    "KXDEBT": "Macro/Economic", "KXBOND": "Macro/Economic", "KXRATE": "Macro/Economic",
+    "KXDEBT": "Macro/Economic", "KXBOND": "Entertainment", "KXRATE": "Macro/Economic",
     "KXCOST": "Macro/Economic", "KXCONS": "Macro/Economic", "KXHOWM": "Macro/Economic",
     "KXNUMS": "Macro/Economic", "KXDATA": "Macro/Economic", "KXRECP": "Macro/Economic",
     "KXMEDI": "Macro/Economic", "KXINSU": "Macro/Economic", "KXTXRS": "Macro/Economic",
@@ -68,7 +68,7 @@ CATEGORY_MAP = {
     # Entertainment
     "KXRECO": "Entertainment", "KXGRAM": "Entertainment", "KXOSC": "Entertainment", "KXMOVC": "Entertainment",
     "KXMOVN": "Entertainment", "KXMOVW": "Entertainment", "KXTVSE": "Entertainment",
-    "KXSHOW": "Entertainment", "KXSNL": "Entertainment", "KXPERF": "Entertainment",
+    "KXSHOW": "Entertainment", "KXSNL": "Entertainment", "KXPERF": "Entertainment", "KXPERFORM": "Entertainment",
     "KXSWIF": "Entertainment", "KXBEYO": "Entertainment", "KXPOPC": "Entertainment",
     "KXMUSI": "Entertainment", "KXLIPA": "Entertainment", "KXMAYO": "Entertainment",
     "KXEURE": "Entertainment", "KXESVI": "Entertainment", "KXACTO": "Entertainment",

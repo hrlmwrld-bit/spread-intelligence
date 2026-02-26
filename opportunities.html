@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalshi Market Opportunities</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #111;
+  --border: #222;
+  --text: #e8e8e8;
+  --muted: #555;
+  --orange: #ff4d00;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+.logo span { color: var(--orange); }
+
+.header-meta {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #00cc66;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── STATS BAR ── */
+.stats-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-item {
+  padding: 12px 24px;
+  border-right: 1px solid var(--border);
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.control-label {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.filter-btn:hover, .filter-btn.active {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.filter-btn.active { background: rgba(255,77,0,0.08); }
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  height: calc(100vh - 140px);
+}
+
+/* ── CHART ── */
+.chart-container {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-title {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+#scatter { width: 100%; height: calc(100% - 30px); }
+
+/* D3 styles */
+.axis text { fill: #444; font-size: 10px; font-family: 'DM Mono', monospace; }
+.axis path, .axis line { stroke: #222; }
+.axis-label { fill: #444; font-size: 10px; font-family: 'DM Mono', monospace; }
+.grid line { stroke: #1a1a1a; stroke-dasharray: 2,2; }
+.grid path { stroke: none; }
+
+.dot {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.dot:hover { stroke-width: 2px !important; }
+
+.quadrant-label {
+  fill: #2a2a2a;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── TOOLTIP ── */
+.tooltip {
+  position: fixed;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+  max-width: 280px;
+}
+
+.tooltip.visible { opacity: 1; }
+
+.tooltip-ticker {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--orange);
+  margin-bottom: 4px;
+}
+
+.tooltip-event {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.tooltip-key { color: var(--muted); }
+.tooltip-val { color: var(--text); }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  padding: 12px 16px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.opportunity-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.opportunity-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid #161616;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.opportunity-item:hover { background: #161616; }
+
+.opp-ticker {
+  font-size: 11px;
+  color: var(--orange);
+  margin-bottom: 2px;
+}
+
+.opp-event {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opp-metrics {
+  display: flex;
+  gap: 12px;
+}
+
+.opp-metric { font-size: 10px; }
+.opp-metric .val { color: var(--text); }
+.opp-metric .lbl { color: var(--muted); }
+
+.score-bar {
+  height: 2px;
+  background: #1a1a1a;
+  margin-top: 6px;
+  position: relative;
+}
+
+.score-bar-fill {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  background: var(--orange);
+}
+
+/* category legend */
+.legend {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.legend-item:hover { color: var(--text); }
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.error-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ff4444;
+  font-size: 11px;
+  text-align: center;
+  padding: 24px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SPREAD<span>INT</span> — OPPORTUNITY MAP</div>
+  <div class="header-meta">
+    <span><span class="live-dot"></span>LIVE</span>
+    <span id="last-updated">—</span>
+    <span id="market-count">— MARKETS</span>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-label">Opportunity Score Leaders</div>
+    <div class="stat-value" id="top-opp">—</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Highest 24h Volume</div>
+    <div class="stat-value" id="top-vol">—</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Wide + Active Markets</div>
+    <div class="stat-value" id="opp-count">—</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Next Refresh</div>
+    <div class="stat-value" id="countdown">5:00</div>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="control-label">Category:</span>
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('Sports', this)">Sports</button>
+  <button class="filter-btn" onclick="setFilter('Politics', this)">Politics</button>
+  <button class="filter-btn" onclick="setFilter('Entertainment', this)">Entertainment</button>
+  <button class="filter-btn" onclick="setFilter('Macro/Economic', this)">Macro</button>
+  <button class="filter-btn" onclick="setFilter('Tech/IPO', this)">Tech/IPO</button>
+  <button class="filter-btn" onclick="setFilter('Other', this)">Other</button>
+  <div class="separator"></div>
+  <span class="control-label">Min Vol 24h:</span>
+  <button class="filter-btn active" onclick="setMinVol(0, this)">All</button>
+  <button class="filter-btn" onclick="setMinVol(100, this)">>100</button>
+  <button class="filter-btn" onclick="setMinVol(1000, this)">>1K</button>
+  <button class="filter-btn" onclick="setMinVol(10000, this)">>10K</button>
+</div>
+
+<div class="main">
+  <div class="chart-container">
+    <div class="chart-title">// SPREAD % vs 24H VOLUME — each dot is a market — top-right = opportunity</div>
+    <svg id="scatter"></svg>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-section" style="flex: 1.5">
+      <div class="sidebar-title">// Top Opportunities (spread × volume)</div>
+      <div class="opportunity-list" id="opp-list"></div>
+    </div>
+    <div class="sidebar-section" style="flex: 1">
+      <div class="sidebar-title">// Category Legend</div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const API = 'http://localhost:8766';
+const REFRESH_MS = 5 * 60 * 1000;
+
+const CAT_COLORS = {
+  'Sports':        '#ff4444',
+  'Entertainment': '#ff8833',
+  'Tech/IPO':      '#ffcc00',
+  'Politics':      '#44aaff',
+  'Macro/Economic':'#00cc66',
+  'Science/Tech':  '#aa66ff',
+  'Other':         '#666',
+};
+
+let allMarkets = [];
+let activeFilter = 'all';
+let minVol = 0;
+let countdownSec = 300;
+
+// ── FETCH DATA ────────────────────────────────────────────────────────────────
+async function fetchData() {
+  try {
+    const res = await fetch(`${API}/v1/markets?limit=3000`);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+
+    allMarkets = data.markets.filter(m => m.volume_24h !== undefined);
+
+    // Compute opportunity score = spread_pct * log(volume_24h + 1)
+    const maxScore = Math.max(...allMarkets.map(m => m.spread_pct * Math.log(m.volume_24h + 1)));
+    allMarkets.forEach(m => {
+      m.opp_score = m.spread_pct * Math.log(m.volume_24h + 1);
+      m.opp_score_norm = m.opp_score / maxScore;
+    });
+
+    document.getElementById('last-updated').textContent =
+      'UPDATED ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('market-count').textContent = allMarkets.length + ' MARKETS';
+
+    // Stats
+    const byVol = [...allMarkets].sort((a,b) => b.volume_24h - a.volume_24h);
+    const byOpp = [...allMarkets].sort((a,b) => b.opp_score - a.opp_score);
+    const wideActive = allMarkets.filter(m => m.spread_pct > 50 && m.volume_24h > 100);
+
+    document.getElementById('top-vol').textContent =
+      byVol[0] ? byVol[0].ticker.slice(0,16) + '…' : '—';
+    document.getElementById('top-opp').textContent =
+      byOpp[0] ? byOpp[0].ticker.slice(0,16) + '…' : '—';
+    document.getElementById('opp-count').textContent = wideActive.length;
+
+    renderLegend();
+    renderChart();
+    renderOpportunities();
+
+  } catch(e) {
+    document.getElementById('scatter').innerHTML =
+      `<foreignObject width="100%" height="100%">
+        <div class="error-msg">
+          Cannot reach API at ${API}<br>
+          Make sure api.py is running in VS Code
+        </div>
+      </foreignObject>`;
+  }
+}
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+function getFiltered() {
+  return allMarkets.filter(m => {
+    if (activeFilter !== 'all' && m.category !== activeFilter) return false;
+    if (m.volume_24h < minVol) return false;
+    return true;
+  });
+}
+
+function renderChart() {
+  const svg = d3.select('#scatter');
+  svg.selectAll('*').remove();
+
+  const container = document.getElementById('scatter').parentElement;
+  const W = container.clientWidth - 48;
+  const H = container.clientHeight - 60;
+  const margin = { top: 20, right: 20, bottom: 50, left: 70 };
+  const w = W - margin.left - margin.right;
+  const h = H - margin.top - margin.bottom;
+
+  svg.attr('width', W).attr('height', H);
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const data = getFiltered();
+  if (!data.length) return;
+
+  // Scales
+  const xMin = 0;
+  const xMax = 200;
+  const xScale = d3.scaleLinear()
+    .domain([xMin, xMax])
+    .range([0, w]);
+
+  const maxVol = d3.max(data, d => d.volume_24h) || 1;
+  const minVolNonZero = d3.min(data.filter(d => d.volume_24h > 0), d => d.volume_24h) || 1;
+  const yScale = d3.scaleLog()
+    .domain([Math.max(1, minVolNonZero * 0.5), maxVol * 2])
+    .range([h, 0])
+    .clamp(true);
+
+  // Grid
+  g.append('g').attr('class', 'grid')
+    .call(d3.axisLeft(yScale).tickSize(-w).tickFormat(''));
+  g.append('g').attr('class', 'grid')
+    .attr('transform', `translate(0,${h})`)
+    .call(d3.axisBottom(xScale).tickSize(-h).tickFormat(''));
+
+  // Quadrant lines
+  g.append('line')
+    .attr('x1', xScale(50)).attr('x2', xScale(50))
+    .attr('y1', 0).attr('y2', h)
+    .attr('stroke', '#2a2a2a').attr('stroke-dasharray', '4,4');
+
+  // Quadrant labels
+  g.append('text').attr('class', 'quadrant-label')
+    .attr('x', xScale(125)).attr('y', 20)
+    .attr('text-anchor', 'middle')
+    .text('◉ OPPORTUNITY ZONE');
+
+  // Axes
+  g.append('g').attr('class', 'axis')
+    .attr('transform', `translate(0,${h})`)
+    .call(d3.axisBottom(xScale).ticks(8).tickFormat(d => d + '%'));
+
+  g.append('g').attr('class', 'axis')
+    .call(d3.axisLeft(yScale).ticks(6, '.0s').tickFormat(d => {
+      if (d >= 1000000) return (d/1000000).toFixed(1) + 'M';
+      if (d >= 1000) return (d/1000).toFixed(0) + 'K';
+      return d;
+    }));
+
+  // Axis labels
+  g.append('text').attr('class', 'axis-label')
+    .attr('x', w/2).attr('y', h + 42)
+    .attr('text-anchor', 'middle')
+    .text('← TIGHT SPREAD          SPREAD %          WIDE SPREAD →');
+
+  g.append('text').attr('class', 'axis-label')
+    .attr('transform', 'rotate(-90)')
+    .attr('x', -h/2).attr('y', -55)
+    .attr('text-anchor', 'middle')
+    .text('← LOW VOLUME     24H VOLUME (log)     HIGH VOLUME →');
+
+  // Dots
+  const tooltip = document.getElementById('tooltip');
+
+  g.selectAll('.dot')
+    .data(data.filter(d => d.volume_24h > 0))
+    .enter()
+    .append('circle')
+    .attr('class', 'dot')
+    .attr('cx', d => xScale(Math.min(d.spread_pct, xMax)))
+    .attr('cy', d => yScale(Math.max(d.volume_24h, 1)))
+    .attr('r', d => {
+      const base = Math.log10(d.volume_24h + 1) * 3;
+      return Math.max(4, Math.min(base, 14));
+    })
+    .attr('fill', d => CAT_COLORS[d.category] || '#aaa')
+    .attr('fill-opacity', 0.85)
+    .attr('stroke', '#000')
+    .attr('stroke-width', 1)
+    .attr('stroke-opacity', 0.4)
+    .on('mousemove', function(event, d) {
+      tooltip.classList.add('visible');
+      tooltip.style.left = (event.clientX + 16) + 'px';
+      tooltip.style.top = (event.clientY - 10) + 'px';
+      tooltip.innerHTML = `
+        <div class="tooltip-ticker">${d.ticker}</div>
+        <div class="tooltip-event">${d.event}</div>
+        <div class="tooltip-row"><span class="tooltip-key">Category</span><span class="tooltip-val">${d.category}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Spread</span><span class="tooltip-val">${d.spread_pct.toFixed(1)}%</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Bid / Ask</span><span class="tooltip-val">${d.bid}¢ / ${d.ask}¢</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">24h Volume</span><span class="tooltip-val">${d.volume_24h.toLocaleString()}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">All-time Vol</span><span class="tooltip-val">${d.volume.toLocaleString()}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Opp Score</span><span class="tooltip-val">${d.opp_score.toFixed(0)}</span></div>
+      `;
+    })
+    .on('mouseleave', () => tooltip.classList.remove('visible'));
+}
+
+// ── OPPORTUNITIES SIDEBAR ─────────────────────────────────────────────────────
+function renderOpportunities() {
+  const data = getFiltered()
+    .filter(m => m.volume_24h > 0)
+    .sort((a,b) => b.opp_score - a.opp_score)
+    .slice(0, 30);
+
+  const maxScore = data[0]?.opp_score || 1;
+  const list = document.getElementById('opp-list');
+  list.innerHTML = '';
+
+  data.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'opportunity-item';
+    div.innerHTML = `
+      <div class="opp-ticker" style="color:${CAT_COLORS[m.category]||'#666'}">${m.ticker}</div>
+      <div class="opp-event">${m.event}</div>
+      <div class="opp-metrics">
+        <div class="opp-metric"><span class="val">${m.spread_pct.toFixed(0)}%</span> <span class="lbl">sprd</span></div>
+        <div class="opp-metric"><span class="val">${m.volume_24h >= 1000 ? (m.volume_24h/1000).toFixed(1)+'K' : m.volume_24h}</span> <span class="lbl">vol24h</span></div>
+        <div class="opp-metric"><span class="val">${m.bid}¢/${m.ask}¢</span> <span class="lbl">b/a</span></div>
+      </div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:${(m.opp_score/maxScore*100).toFixed(0)}%"></div></div>
+    `;
+    list.appendChild(div);
+  });
+
+  document.getElementById('opp-count').textContent =
+    getFiltered().filter(m => m.spread_pct > 50 && m.volume_24h > 100).length;
+}
+
+// ── LEGEND ────────────────────────────────────────────────────────────────────
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  Object.entries(CAT_COLORS).forEach(([cat, color]) => {
+    const count = allMarkets.filter(m => m.category === cat).length;
+    const div = document.createElement('div');
+    div.className = 'legend-item';
+    div.innerHTML = `
+      <div class="legend-dot" style="background:${color}"></div>
+      <span>${cat}</span>
+      <span style="margin-left:auto;color:#333">${count}</span>
+    `;
+    div.onclick = () => setFilter(cat, null);
+    legend.appendChild(div);
+  });
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────────────
+function setFilter(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.controls .filter-btn').forEach(b => {
+    if (b.textContent.toLowerCase() === cat.toLowerCase() ||
+        (cat === 'all' && b.textContent === 'All') ||
+        (cat === 'Macro/Economic' && b.textContent === 'Macro')) {
+      b.classList.add('active');
+    } else if (['All','Sports','Politics','Entertainment','Macro','Tech/IPO','Other'].includes(b.textContent)) {
+      b.classList.remove('active');
+    }
+  });
+  renderChart();
+  renderOpportunities();
+}
+
+function setMinVol(vol, btn) {
+  minVol = vol;
+  document.querySelectorAll('.controls .filter-btn').forEach(b => {
+    if (['>100','>1K','>10K','All'].some(l => b.textContent === l)) {
+      b.classList.remove('active');
+    }
+  });
+  if (btn) btn.classList.add('active');
+  renderChart();
+  renderOpportunities();
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────────────────────
+function updateCountdown() {
+  countdownSec--;
+  if (countdownSec <= 0) {
+    countdownSec = 300;
+    fetchData();
+  }
+  const m = Math.floor(countdownSec / 60);
+  const s = countdownSec % 60;
+  document.getElementById('countdown').textContent =
+    m + ':' + String(s).padStart(2, '0');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+fetchData();
+setInterval(updateCountdown, 1000);
+window.addEventListener('resize', renderChart);
+</script>
+</body>
+</html>

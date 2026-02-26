@@ -64,7 +64,7 @@ CATEGORY_MAP = {
     "KXFED":  "Macro/Economic", "KXFEDC": "Macro/Economic", "KXFEDD": "Macro/Economic",
     "KXFEDE": "Macro/Economic", "KXCPI":  "Macro/Economic", "KXLCPI": "Macro/Economic",
     "KXGDPY": "Macro/Economic", "KXGDPS": "Macro/Economic", "KXGDPU": "Macro/Economic",
-    "KXU3MA": "Macro/Economic", "KXDEBT": "Macro/Economic", "KXBOND": "Macro/Economic",
+    "KXU3MA": "Macro/Economic", "KXDEBT": "Macro/Economic", "KXBOND": "Entertainment",
     "KXCOST": "Macro/Economic", "KXCONS": "Macro/Economic", "KXHOWM": "Macro/Economic",
     "KXNUMS": "Macro/Economic", "KXDATA": "Macro/Economic", "KXMEDI": "Macro/Economic",
     "KXINSU": "Macro/Economic", "KXTXRS": "Macro/Economic", "KXTXSE": "Macro/Economic",
@@ -85,7 +85,7 @@ CATEGORY_MAP = {
     # Entertainment
     "KXGRAM": "Entertainment", "KXOSC":  "Entertainment", "KXMOVC": "Entertainment",
     "KXMOVN": "Entertainment", "KXMOVW": "Entertainment", "KXTVSE": "Entertainment",
-    "KXSHOW": "Entertainment", "KXSNL":  "Entertainment", "KXPERF": "Entertainment",
+    "KXSHOW": "Entertainment", "KXSNL":  "Entertainment", "KXPERF": "Entertainment", "KXPERFORM": "Entertainment",
     "KXSWIF": "Entertainment", "KXBEYO": "Entertainment", "KXPOPC": "Entertainment",
     "KXLIPA": "Entertainment", "KXMAYO": "Entertainment", "KXEURE": "Entertainment",
     "KXESVI": "Entertainment", "KXACTO": "Entertainment", "KXTAYL": "Entertainment",
@@ -131,6 +131,8 @@ def load_all_rows():
                     "mid":       float(row["midpoint"]),
                     "spread":    float(row["spread"]),
                     "spread_pct": float(row["spread_pct"]),
+                    "volume":     int(float(row.get("volume", 0) or 0)),
+                    "volume_24h": int(float(row.get("volume_24h", 0) or 0)),
                     "category":  categorize(row["series"]),
                 })
             except (ValueError, KeyError):
@@ -213,7 +215,7 @@ def filter_and_sort(markets, params):
     results = sorted(results, key=lambda m: m.get(sort_key, 0), reverse=not order)
 
     try:
-        limit = min(int(params.get("limit", 50)), 500)
+        limit = min(int(params.get("limit", 50)), 3000)
     except ValueError:
         limit = 50
     return results[:limit]
