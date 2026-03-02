@@ -32,6 +32,14 @@ from datetime import datetime, timedelta
 CSV_PATH = os.path.expanduser("~/Desktop/kalshi-analysis/master_spreads.csv")
 PORT = 8766
 
+def _days_between(start_str, end_str):
+    try:
+        start = datetime.fromisoformat(start_str.replace("+00:00","").strip())
+        end = datetime.fromisoformat(end_str.replace("+00:00","").strip())
+        return (end - start).days
+    except:
+        return None
+
 CATEGORY_MAP = {
     # Politics
     "KXHOUS": "Politics", "KXRHOU": "Politics", "KXDHOU": "Politics",
@@ -133,7 +141,13 @@ def load_all_rows():
                     "spread_pct": float(row["spread_pct"]),
                     "volume":     int(float(row.get("volume", 0) or 0)),
                     "volume_24h": int(float(row.get("volume_24h", 0) or 0)),
+                    "last_price": int(float(row.get("last_price", 0) or 0)),
+                    "open_time":  row.get("open_time", ""),
+                    "close_time": row.get("close_time", ""),
+                    "status": row.get("status", "active"),
                     "category":  categorize(row["series"]),
+                    "days_to_close": _days_between(datetime.utcnow().isoformat(), row.get("close_time", "")),
+                    "days_since_open": _days_between(row.get("open_time", ""), datetime.utcnow().isoformat()),
                 })
             except (ValueError, KeyError):
                 continue
@@ -146,7 +160,7 @@ def get_latest_snapshot(rows):
         t = row["ticker"]
         if t not in latest or row["timestamp"] > latest[t]["timestamp"]:
             latest[t] = row
-    return list(latest.values())
+    return [r for r in latest.values() if r.get("status", "active") != "finalized"]
 
 def compute_category_stats(markets):
     """Compute mean/median/n by category."""
@@ -241,7 +255,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0].rstrip("/")
-        params = parse_qs(self.path)
+        params = parse_qs(self.path.split("?")[1] if "?" in self.path else "")
 
         # Load data
         all_rows = load_all_rows()
@@ -352,6 +366,72 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
                 "last_updated": max((r["timestamp"] for r in snapshot), default=None),
                 "tightest": sorted_all[:n],
                 "widest": sorted_all[-n:][::-1],
+            })
+
+
+        # ── GET /v1/efficiency ─────────────────────────────────────────────
+        elif path == "/v1/efficiency":
+            n = int(params.get("limit", [50])[0])
+            cat = params.get("category", [None])[0]
+            markets = [r for r in snapshot if not cat or r["category"] == cat]
+
+            for m in markets:
+                sprd = m["spread_pct"] or 0.01
+                m["efficiency_ratio"] = round(m["volume_24h"] / sprd, 2)
+                m["opp_score"] = round(m["spread_pct"] * (m["volume_24h"] ** 0.5), 2)
+
+            with_volume = [m for m in markets if m["volume_24h"] > 0]
+            most_efficient = sorted(with_volume, key=lambda x: x["efficiency_ratio"], reverse=True)[:n]
+            least_efficient = sorted(with_volume, key=lambda x: x["efficiency_ratio"])[:n]
+            top_opportunity = sorted(with_volume, key=lambda x: x["opp_score"], reverse=True)[:n]
+
+            self.send_json({
+                "last_updated": snapshot[0]["timestamp"] if snapshot else None,
+                "most_efficient": most_efficient,
+                "least_efficient": least_efficient,
+                "top_opportunity": top_opportunity
+            })
+
+        # ── GET /v1/consistency ────────────────────────────────────────────
+        elif path == "/v1/consistency":
+            from collections import defaultdict
+            min_legs = int(params.get("min_legs", [3])[0])
+            cat = params.get("category", [None])[0]
+            markets = [r for r in snapshot if not cat or r["category"] == cat]
+
+            series_groups = defaultdict(list)
+            for m in markets:
+                series_groups[m["series"]].append(m)
+
+            results = []
+            for series, legs in series_groups.items():
+                if len(legs) < min_legs:
+                    continue
+                bid_sum = sum(m["bid"] for m in legs)
+                ask_sum = sum(m["ask"] for m in legs)
+                mid_sum = sum(m["mid"] for m in legs)
+                avg_spread = round(sum(m["spread_pct"] for m in legs) / len(legs), 2)
+                bid_deviation = round(abs(bid_sum - 100), 2)
+                ask_deviation = round(abs(ask_sum - 100), 2)
+                results.append({
+                    "series": series,
+                    "event": legs[0]["event"],
+                    "category": legs[0]["category"],
+                    "n_legs": len(legs),
+                    "bid_sum": round(bid_sum, 2),
+                    "ask_sum": round(ask_sum, 2),
+                    "mid_sum": round(mid_sum, 2),
+                    "bid_deviation": bid_deviation,
+                    "ask_deviation": ask_deviation,
+                    "avg_spread_pct": avg_spread,
+                    "legs": legs
+                })
+
+            results.sort(key=lambda x: x["bid_deviation"], reverse=True)
+            self.send_json({
+                "last_updated": snapshot[0]["timestamp"] if snapshot else None,
+                "total_events": len(results),
+                "events": results[:500]
             })
 
         # ── 404 ──────────────────────────────────────────────────────────────
