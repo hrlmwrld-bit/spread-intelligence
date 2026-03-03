@@ -3,6 +3,7 @@ from kalshi_python.api import EventsApi
 from kalshi_python.configuration import Configuration
 import csv
 import os
+print("ENV VARS:", [k for k in os.environ.keys() if "KALSHI" in k])
 from datetime import datetime
 import time
 
