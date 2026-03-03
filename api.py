@@ -22,6 +22,9 @@ Query Parameters:
 """
 
 import http.server
+import threading
+import subprocess
+import sys
 import json
 import csv
 import os
@@ -29,7 +32,7 @@ import urllib.parse
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_spreads.csv")
+CSV_PATH = os.environ.get("CSV_PATH", "/data/master_spreads.csv")
 PORT = int(os.environ.get("PORT", 8766))
 
 def _days_between(start_str, end_str):
@@ -441,7 +444,21 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {self.address_string()} — {args[0]} {args[1]}")
 
+def run_collector():
+    """Run collect_spreads.py every 6 hours in background."""
+    import time
+    collector = os.path.join(os.path.dirname(os.path.abspath(__file__)), "collect_spreads.py")
+    while True:
+        try:
+            subprocess.run([sys.executable, collector], timeout=300)
+        except Exception as e:
+            print(f"Collector error: {e}")
+        time.sleep(6 * 60 * 60)  # 6 hours
+
 if __name__ == "__main__":
+    collector_thread = threading.Thread(target=run_collector, daemon=True)
+    collector_thread.start()
+    print("Background collector started")
     server = http.server.HTTPServer(("0.0.0.0", PORT), APIHandler)
     print(f"╔═══════════════════════════════════════════════════╗")
     print(f"║   Kalshi Spread Intelligence API v1.0.0           ║")

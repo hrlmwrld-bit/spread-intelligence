@@ -70,7 +70,7 @@ while total_pulled < 500:
     if not cursor:
         break
 
-master_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_spreads.csv")
+master_file = os.environ.get("CSV_PATH", "/data/master_spreads.csv")
 file_exists = os.path.exists(master_file)
 
 with open(master_file, "a", newline="") as f:
