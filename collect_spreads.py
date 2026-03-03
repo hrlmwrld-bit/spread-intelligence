@@ -8,10 +8,14 @@ import time
 import os
 
 config = Configuration(host="https://api.elections.kalshi.com/trade-api/v2")
-config.api_key_id = "1d3dba8d-6a07-4936-80bb-d697524fc501"
+config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501")
 
-with open("/Users/adamjohnson-hill/.kalshi/private_key.pem", "r") as f:
-    config.private_key_pem = f.read()
+kalshi_private_key = os.environ.get("KALSHI_PRIVATE_KEY")
+if kalshi_private_key:
+    config.private_key_pem = kalshi_private_key.replace("\\n", "\n")
+else:
+    with open(os.path.expanduser("~/.kalshi/private_key.pem"), "r") as f:
+        config.private_key_pem = f.read()
 
 client = kalshi_python.ApiClient(config)
 events_api = EventsApi(client)
