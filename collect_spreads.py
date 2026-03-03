@@ -2,6 +2,7 @@ import kalshi_python
 from kalshi_python.api import EventsApi
 from kalshi_python.configuration import Configuration
 import csv
+import os
 from datetime import datetime
 import time
 import os
@@ -65,7 +66,7 @@ while total_pulled < 500:
     if not cursor:
         break
 
-master_file = "/Users/adamjohnson-hill/Desktop/kalshi-analysis/master_spreads.csv"
+master_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_spreads.csv")
 file_exists = os.path.exists(master_file)
 
 with open(master_file, "a", newline="") as f:

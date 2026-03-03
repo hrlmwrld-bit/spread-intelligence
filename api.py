@@ -29,8 +29,8 @@ import urllib.parse
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-CSV_PATH = os.path.expanduser("~/Desktop/kalshi-analysis/master_spreads.csv")
-PORT = 8766
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_spreads.csv")
+PORT = int(os.environ.get("PORT", 8766))
 
 def _days_between(start_str, end_str):
     try:
@@ -442,7 +442,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {self.address_string()} — {args[0]} {args[1]}")
 
 if __name__ == "__main__":
-    server = http.server.HTTPServer(("localhost", PORT), APIHandler)
+    server = http.server.HTTPServer(("0.0.0.0", PORT), APIHandler)
     print(f"╔═══════════════════════════════════════════════════╗")
     print(f"║   Kalshi Spread Intelligence API v1.0.0           ║")
     print(f"║   http://localhost:{PORT}/v1/status                  ║")
