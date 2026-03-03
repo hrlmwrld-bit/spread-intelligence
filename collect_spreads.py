@@ -3,15 +3,12 @@ from kalshi_python.api import EventsApi
 from kalshi_python.configuration import Configuration
 import csv
 import os
-print("ENV VARS:", [k for k in os.environ.keys() if "KALSHI" in k])
 from datetime import datetime
 import time
 
 config = Configuration(host="https://api.elections.kalshi.com/trade-api/v2")
-config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501")
-
+config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501"
 kalshi_private_key = os.environ.get("KALSHI_PRIVATE_KEY")
-print(f"Key loaded: {bool(kalshi_private_key)}, length: {len(kalshi_private_key) if kalshi_private_key else 0}")
 if kalshi_private_key:
     config.private_key_pem = kalshi_private_key.replace("\\n", "\n")
 else:
