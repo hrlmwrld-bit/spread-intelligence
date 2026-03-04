@@ -437,6 +437,20 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
                 "events": results[:500]
             })
 
+        # ── GET / or /dashboard ─────────────────────────────────────────────
+        elif path in ("", "/", "/dashboard"):
+            dashboard_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard.html")
+            try:
+                with open(dashboard_path, "r") as f:
+                    body = f.read().encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except FileNotFoundError:
+                self.send_error_json("Dashboard not found", 404)
+
         # ── 404 ──────────────────────────────────────────────────────────────
         else:
             self.send_error_json(f"Endpoint '{path}' not found. See /v1/status for available endpoints.", 404)
