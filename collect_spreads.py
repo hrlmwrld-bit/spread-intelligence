@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 
 config = Configuration(host="https://api.elections.kalshi.com/trade-api/v2")
-config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501"
+config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501")
 kalshi_private_key = os.environ.get("KALSHI_PRIVATE_KEY")
 if kalshi_private_key:
     config.private_key_pem = kalshi_private_key.replace("\\n", "\n")
