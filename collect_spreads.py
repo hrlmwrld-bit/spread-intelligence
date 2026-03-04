@@ -69,12 +69,14 @@ while total_pulled < 500:
         break
 
 master_file = os.environ.get("CSV_PATH", "/data/master_spreads.csv")
-file_exists = os.path.exists(master_file)
 
-with open(master_file, "a", newline="") as f:
-    writer = csv.DictWriter(f, fieldnames=results[0].keys())
-    if not file_exists:
-        writer.writeheader()
-    writer.writerows(results)
-
-print(f"{datetime.now().isoformat()} — Appended {len(results)} markets to master_spreads.csv")
+if not results:
+    print(f"{datetime.now().isoformat()} — No results to write (rate limited or empty response)")
+else:
+    file_exists = os.path.exists(master_file)
+    with open(master_file, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=results[0].keys())
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(results)
+    print(f"{datetime.now().isoformat()} — Appended {len(results)} markets to master_spreads.csv")
