@@ -226,7 +226,7 @@ def filter_and_sort(markets, params):
         results = [m for m in results if m["spread_pct"] <= float(params["max_spread"])]
 
     sort_key = params.get("sort", "spread_pct")
-    if sort_key not in ("spread_pct", "bid", "ask", "mid", "ticker"):
+    if sort_key not in ("spread_pct", "bid", "ask", "mid", "ticker", "days_to_close"):
         sort_key = "spread_pct"
     order = params.get("order", "desc") == "asc"
     results = sorted(results, key=lambda m: m.get(sort_key, 0), reverse=not order)
