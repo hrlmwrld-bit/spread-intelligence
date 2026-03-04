@@ -21,14 +21,26 @@ events_api = EventsApi(client)
 results = []
 cursor = None
 total_pulled = 0
+max_retries = 5
 
-while total_pulled < 500:
-    try:
-        response = events_api.get_events(limit=50, status="open", with_nested_markets=True, cursor=cursor)
-    except Exception as e:
-        print(f"Error: {e}")
-        break
-    if not response.events:
+while total_pulled < 5000:
+    retries = 0
+    response = None
+    while retries < max_retries:
+        try:
+            response = events_api.get_events(limit=200, status="open", with_nested_markets=True, cursor=cursor)
+            break
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "too_many_requests" in err.lower():
+                wait = 30 * (retries + 1)
+                print(f"Rate limited, waiting {wait}s before retry {retries+1}/{max_retries}...")
+                time.sleep(wait)
+                retries += 1
+            else:
+                print(f"Error: {e}")
+                break
+    if response is None or not response.events:
         break
     for event in response.events:
         try:
@@ -64,7 +76,7 @@ while total_pulled < 500:
             continue
     cursor = response.cursor
     total_pulled += len(response.events)
-    time.sleep(1)
+    time.sleep(2)
     if not cursor:
         break
 
