@@ -6,6 +6,20 @@ import os
 from datetime import datetime
 import time
 
+# Patch kalshi_python to accept 'finalized' as a valid market status
+try:
+    import kalshi_python.models.market as _mkt
+    _orig = _mkt.Market.model_validate.__func__
+    def _patched(cls, data, *a, **kw):
+        if isinstance(data, dict) and data.get('status') == 'finalized':
+            data = dict(data)
+            data['status'] = 'determined'
+        return _orig(cls, data, *a, **kw)
+    _mkt.Market.model_validate = classmethod(_patched)
+except Exception as _e:
+    print(f"Patch warning: {_e}")
+
+
 config = Configuration(host="https://api.elections.kalshi.com/trade-api/v2")
 config.api_key_id = os.environ.get("KALSHI_API_KEY", "1d3dba8d-6a07-4936-80bb-d697524fc501")
 kalshi_private_key = os.environ.get("KALSHI_PRIVATE_KEY")
