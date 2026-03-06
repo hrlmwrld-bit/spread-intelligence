@@ -39,7 +39,11 @@ while total_pulled < 5000:
                 retries += 1
             else:
                 print(f"Error: {e}")
-                break
+                if "validation error" in err.lower() or "finalized" in err.lower():
+                    retries += 1
+                    time.sleep(5)
+                else:
+                    break
     if response is None or not response.events:
         break
     for event in response.events:
