@@ -232,7 +232,7 @@ def filter_and_sort(markets, params):
     results = sorted(results, key=lambda m: m.get(sort_key, 0), reverse=not order)
 
     try:
-        limit = min(int(params.get("limit", 50)), 3000)
+        limit = min(int((params.get("limit") or [50])[0]), 3000)
     except ValueError:
         limit = 50
     return results[:limit]
